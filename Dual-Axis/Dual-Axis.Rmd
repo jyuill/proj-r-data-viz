@@ -1,0 +1,59 @@
+---
+title: "Dual-Axis Charts: Traps and Tips"
+author: "`r Sys.getenv('USER')`"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      message=FALSE,
+                      warning=FALSE,
+                      fig.height=6,
+                      fig.width=9)
+options(scipen = 99)
+options(digits=3)
+
+library(knitr) ## for functions like include_graphics
+library(gtrendsR)
+library(tidyverse)
+library(scales)
+library(gridExtra)
+library(here)
+library(quantmod)
+library(PerformanceAnalytics)
+
+theme_set(theme_minimal())
+```
+
+## The Temptation of Dual-Axis Charts
+
+Two common scenarios:
+
+1. Comparing trends in two (or more) similar data sets that have vastly different scales.
+2. Comparing a volume metric with a related rate or ratio metric.
+
+(for 1 we can use crypto prices: bitcoin vs cardano; for 2 we can use google analytics sessions vs pages/session or bounce rate or goal conversion rate)
+
+```{r}
+## import crypto data
+crypto_data <- read_csv(here('input','btc-ada-price.csv'))
+```
+
+[ggplot2 dual-y-axis reference](https://www.r-graph-gallery.com/line-chart-dual-Y-axis-ggplot2.html)
+
+```{r, echo=TRUE}
+## show code
+crypto_data %>% ggplot(aes(x=date))+geom_line(aes(y=BTC_CAD))
+```
+
+```{r, echo=FALSE, fig.width=400, caption='google trends interface'}
+## 2 approaches to images:
+## 1. can add this text to body of markdown - less flexible output, harder to size
+# ![Google Trends Interface](images/google-trends-interface-page-crypto.png)
+
+## 2. preferred/recommended: in code (need knitr pkg)
+include_graphics('images/analytics.jpeg')
+## for actual blog posting, need to put images in 'figure' folder and reference there
+# include_graphics(here('figure','analtytics.jpeg'))
+```
