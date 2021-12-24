@@ -35,5 +35,5 @@ cprice_all <- full_join(cprice, cprice2, by='date')
 ## re-arrange cols to put date first for ease of use
 cprice_all <- cprice_all %>% select(date, 1,3:ncol(cprice_all))
 
-## save locally
+## save locally for use elsewhere
 write_csv(cprice_all, 'input/btc-ada-price.csv')
