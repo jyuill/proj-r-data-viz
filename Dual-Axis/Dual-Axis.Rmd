@@ -30,18 +30,22 @@ theme_set(theme_minimal())
 
 ## The Temptation of Dual-Axis Charts
 
-Two common scenarios:
+Sometimes when we are trying to show relationships over time between two dimensions of the same metric, or two separate metrics, we run into a situation where differences in the scales involved make it difficult/impossible to really tell what is going on using a standard line chart. One solution we may be tempted to turn to: a **dual-y-axis** chart, with an axis on the left for the scale that fits one dimension or metric, and a separate scale on the right that fits the other dimension or metric.
+
+Tempting, but risky. This post walks through a couple of scenarios and demonstrates why due care and attention is needed to avoid pitfalls of dual-axis charts. I will follow-up with a post that highlights some alternatives for consideration, instead of giving in to the dual-axis temptation.
+
+There are two common scenarios where dual-axis charts become tempting:
 
 1. Comparing trends in two (or more) similar data sets that have vastly different scales.
-2. Comparing a volume metric with a related rate or ratio metric.
-
-(for 1 we can use crypto prices: bitcoin vs cardano; for 2 we can use google analytics sessions vs pages/session or bounce rate or goal conversion rate)
+2. Comparing a volume metric with a related rate or ratio metric. (so, again, vastly different scales)
 
 ```{r}
 ## import crypto data
 crypto_data <- read_csv(here('input','btc-ada-price.csv'))
 ```
 
+Most charting tools allow for the creation of dual-axis charts. Most relevant for our purposes, this can be done in ggplot2:
+ 
 [ggplot2 dual-y-axis reference](https://www.r-graph-gallery.com/line-chart-dual-Y-axis-ggplot2.html)
 
 ### Scenario 1: Compare trends in similar metrics from two datasets
@@ -69,7 +73,7 @@ summary(crypto_data) %>% kable %>% kable_styling(full_width = FALSE, position='l
 
 This is confirmed in a basic line chart produced in ggplot2:
 
-```{r, echo=TRUE, fig.height=4, fig.width=5}
+```{r crypto-plot-01, echo=TRUE, fig.height=4, fig.width=6}
 crypto_data %>% ggplot(aes(x=date))+geom_line(aes(y=BTC_CAD), color='gold')+
   geom_line(aes(y=ADA_CAD), color='blue')
 ```
@@ -84,8 +88,8 @@ A common approach, then, is to use dual y-axis, with different scales on each, t
 Depending on your tool of choice, you may have a variety of options. For example, default two-axis chart in Google Sheets looks like this:
 
 ```{r, fig.height=4, fig.width=5}
-include_graphics('images/btc-vs-cad-gsheets.png')
-## for actual blog posting, need to put images in 'figure' folder and reference there
+include_graphics('figure/btc-vs-cad-gsheets.png')
+## for actual blog posting, need to put 'figure' folder and reference there
 # include_graphics(here('figure','<image>'))
 ```
 
@@ -99,10 +103,9 @@ In R, ggplot2 includes the option to add a secondary y-axis and set the transfor
 
 * **the choice of relative scales can spin the interpretation of the data in different ways**, as shown in the examples below: (based on 4 charts built with the code shown below but different transformation values)
 
-```{r, echo=TRUE, fig.height=3, fig.width=4}
+```{r plot-crypto-scale-1, echo=TRUE}
 ## select a relevant transfminator
 transfm <- 5000
-#transfm
 col_left <- 'darkgoldenrod3'
 col_right <- 'blue'
 
@@ -119,12 +122,9 @@ cd1 <- crypto_data %>% ggplot(aes(x=date)) +
   )+labs(title=ch_title, x="")
 ```
 
-```{r, fig.height=3, fig.width=4}
+```{r, plot-crypto-scale-2}
 ## select a relevant transfminator
 transfm2 <- 10000
-#transfm
-#col_left <- 'gold'
-#col_right <- 'blue'
 
 ch_title <- paste0('BTC vs ADA (scale ratio: ', transfm2,')')
 
@@ -140,12 +140,9 @@ cd2 <- crypto_data %>% ggplot(aes(x=date)) +
   )+labs(title=ch_title, x="")
 ```
 
-```{r, fig.height=3, fig.width=4}
+```{r plot-crypto-scale-3}
 ## select a relevant transfminator
 transfm3 <- 25000
-#transfm
-#col_left <- 'gold'
-#col_right <- 'blue'
 
 ch_title <- paste0('BTC vs ADA (scale ratio: ', transfm3,')')
 
@@ -161,11 +158,8 @@ cd3 <- crypto_data %>% ggplot(aes(x=date)) +
   )+labs(title=ch_title, x="")
 ```
 
-```{r, fig.height=3, fig.width=4}
+```{r plot-crypto-scale-4}
 transfm4 <- 50000
-#transfm
-#col_left <- 'gold'
-#col_right <- 'blue'
 
 ch_title <- paste0('BTC vs ADA (scale ratio: ', transfm4,')')
 cd4 <- crypto_data %>% ggplot(aes(x=date)) +
@@ -180,7 +174,7 @@ cd4 <- crypto_data %>% ggplot(aes(x=date)) +
   )+labs(title=ch_title, x="")
 ```
 
-```{r, echo=TRUE}
+```{r plot-crypto-scale-all, echo=TRUE}
 grid.arrange(cd1, cd2, cd3, cd4, nrow=2)
 ```
 
@@ -204,7 +198,7 @@ transfm <- median(crypto_data$BTC_CAD)/median(crypto_data$ADA_CAD)
 
 Median BTC vs ADA is `r transfm` so this could be useful for transformation, at least as starting point. You could 1) use this directly, as below, or 2) use it to guide you toward a nearby number that is a nice, round number to work with. For example, a reasonably close multiple in this case is **10,000** (chart in the top-right of the 4 charts above). This is much easier for a person to relate to when comparing the two axes, making it slightly less daunting. 
 
-```{r, fig.height=4, fig.width=5}
+```{r plot-crypto-scale-calc, fig.height=4, fig.width=6}
 ch_title <- paste0('BTC vs ADA (scale ratio: ', transfm,')')
 crypto_data %>% ggplot(aes(x=date)) +
   geom_line(aes(y=BTC_CAD), color=col_left)+
@@ -254,7 +248,7 @@ summary(ga_data) %>% kable %>% kable_styling(full_width = FALSE, position='left'
 
 
 
-```{r, echo=TRUE, fig.height=4, fig.width=5}
+```{r plot-ga-1, echo=TRUE, fig.height=4, fig.width=6}
 transfm <- median(ga_data$users)/median(ga_data$conv_rate)
 
 col_left <- 'blue'
@@ -287,15 +281,13 @@ When working with two different types of metrics, a variation on the line charts
 
 In the example below, I have changed the transformation ratio from the **median calculation (~26 million)** to **10 million**. This *maybe* provides a more intuitive way to interpret the relationship: it is easy to see that when the scale doubles on one side, the other scale doubles as well.  
 
-```{r, echo=TRUE, fig.height=4, fig.width=5}
+```{r plot-ga-2, echo=TRUE, fig.height=4, fig.width=6}
 transfm <- median(ga_data$users)/median(ga_data$conv_rate)
 transfm <- 10000000
-#transfm
-col_left <- 'lightblue'
-col_left_t <- 'blue'
+col_left <- '#009E73'
 col_right <- 'darkblue'
 
-ch_title <- "Website users vs conversation rates"
+ch_title <- "Website Users vs Conversion Rates"
 ga_data %>% ggplot(aes(x=date)) +
   ## change line to bar chart for contrast
   geom_col(aes(y=users), fill=col_left)+
@@ -307,10 +299,10 @@ ga_data %>% ggplot(aes(x=date)) +
     # Add a second axis and specify its features
     sec.axis = sec_axis(~./transfm, name="conversion %", labels=percent)
   )+labs(title=ch_title, x="")+
-  theme(axis.text.y.left = element_text(color=col_left_t, size=8),
-        axis.title.y.left = element_text(color=col_left_t, size=12),
-        axis.text.y.right = element_text(color=col_right, size=8),
-        axis.title.y.right = element_text(color=col_right, size=12))
+  theme(axis.text.y.left = element_text(color=col_left, size=10),
+        axis.title.y.left = element_text(color=col_left, size=14),
+        axis.text.y.right = element_text(color=col_right, size=10),
+        axis.title.y.right = element_text(color=col_right, size=14))
 
 ```
 
